@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from models import product
+from database import session
 app=FastAPI()
 
 #Home
@@ -15,6 +16,9 @@ products = [
 #view
 @app.get("/products")
 def get_product():
+    #db
+    db=session()
+    db.query()
     return products
 
 #view by id
