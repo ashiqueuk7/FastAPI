@@ -1,6 +1,14 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-db_url="postgresql://postgres:777@localhost:5432/fast"
-engine=create_engine(db_url)
-SessionLocal=sessionmaker(autoflush=False,autocommit=False,bind=engine)
+DATABASE_URL = "postgresql://postgres:password@localhost/FastApi"
+
+engine = create_engine(DATABASE_URL)
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
+Base = declarative_base()

@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 from models import product
-from database import session
+from database import SessionLocal,engine
+import database_models
+
 app=FastAPI()
+
+database_models.Base.metadata.create_all(bind=engine)
 
 #Home
 @app.get('/')
@@ -13,12 +17,22 @@ products = [
     product(id=2, name="S26 Ultra", disc="Best Phone", price=130000.00, quant=10),
     product(id=3, name="X300 Pro", disc="Best Phone", price=1000000.00, quant=10),
 ]
+
+#connection
+def init_db():
+    db=SessionLocal()
+    for i in products:
+        db.add(database_models.product(**i.model_dump()))
+    db.commit()
+init_db()
+
 #view
 @app.get("/products")
 def get_product():
     #db
-    db=session()
+    db=SessionLocal()
     db.query()
+
     return products
 
 #view by id
