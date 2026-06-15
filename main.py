@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,Depends
 from models import product
 from database import SessionLocal,engine
 import database_models
+from sqlalchemy.orm import Session
 
 app=FastAPI()
 
@@ -13,34 +14,41 @@ def greet():
     return "Welcome" 
 
 products = [
-    product(id=1, name="iPhone 17", disc="Best Phone", price=700000.00, quant=10),
+    product(id=1, name="iPhone 17", disc="Best Phone", price=700000.00, quant=5),
     product(id=2, name="S26 Ultra", disc="Best Phone", price=130000.00, quant=10),
-    product(id=3, name="X300 Pro", disc="Best Phone", price=1000000.00, quant=10),
+    product(id=3, name="X300 Pro ", disc="Best Phone", price=1000000.00, quant=10),
 ]
+
+def get_db():
+    db=SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 #connection
 def init_db():
     db=SessionLocal()
-    for i in products:
-        db.add(database_models.product(**i.model_dump()))
-    db.commit()
+
+    count=db.query(database_models.product).count
+    if count==0:
+        for i in products:
+            db.add(database_models.product(**i.model_dump()))
+        db.commit()
 init_db()
 
 #view
 @app.get("/products")
-def get_product():
-    #db
-    db=SessionLocal()
-    db.query()
-
-    return products
+def get_product(db : Session=Depends(get_db)):
+    db_products=db.query(database_models.product).all()
+    return db_products
 
 #view by id
 @app.get("/product/{id}")
-def get_product_by_id(id:int):
-    for i in products:
-        if i.id==id:
-            return i
+def get_product_by_id(id:int, db : Session=Depends(get_db)):
+    db_product=db.query(database_models.product).filter(database_models.product.id==id).first()
+    if db_product:
+        return db_product
     return "Product not found"
 
 #add
