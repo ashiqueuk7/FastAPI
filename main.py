@@ -3,8 +3,17 @@ from models import product
 from database import SessionLocal,engine
 import database_models
 from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app=FastAPI()
+
+#frontend connection
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8000"],
+    allow_methods=["*"]
+)
 
 database_models.Base.metadata.create_all(bind=engine)
 
@@ -53,27 +62,35 @@ def get_product_by_id(id:int, db : Session=Depends(get_db)):
 
 #add
 @app.post("/product")
-def add_product(product:product):
-    products.append(product)
+def add_product(product:product, db : Session=Depends(get_db)):
+    db.add(database_models.product(**product.model_dump()))
+    db.commit()
     return product
 
 #update
 @app.put("/product")
-def update_product(id:int, product:product):
-     for i in range(len(products)):
-        if products[i].id==id:
-            products[i]=product
-            return "Product added Success."
-     return "Not Found."
+def update_product(id:int, product:product, db : Session=Depends(get_db)):
+     db_product=db.query(database_models.product).filter(database_models.product.id==id).first()
+     if db_product:
+         db_product.name=product.name
+         db_product.disc=product.disc
+         db_product.price=product.price
+         db_product.quant=product.quant
+         db.commit()
+         return "Product Updated."
+     else:
+        return "Not Found."
 
 #del
 @app.delete("/product")
-def del_product(id:int):
-    for i in range(len(products)):
-        if products[i].id==id:
-            del products[i]
-            return "Product Deleted"
-    return "Not Found."
+def del_product(id:int, db : Session=Depends(get_db)):
+    db_product=db.query(database_models.product).filter(database_models.product.id==id).first()
+    if db_product:
+        db.delete(db_product)
+        db.commit()
+        return "product deleted."
+    else:
+        return "Not Found."
         
         
 
