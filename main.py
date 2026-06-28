@@ -11,8 +11,10 @@ app=FastAPI()
 #frontend connection
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000"],
-    allow_methods=["*"]
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 database_models.Base.metadata.create_all(bind=engine)
@@ -39,7 +41,7 @@ def get_db():
 def init_db():
     db=SessionLocal()
 
-    count=db.query(database_models.product).count
+    count=db.query(database_models.product).count()
     if count==0:
         for i in products:
             db.add(database_models.product(**i.model_dump()))
@@ -68,7 +70,7 @@ def add_product(product:product, db : Session=Depends(get_db)):
     return product
 
 #update
-@app.put("/product")
+@app.put("/product/{id}")
 def update_product(id:int, product:product, db : Session=Depends(get_db)):
      db_product=db.query(database_models.product).filter(database_models.product.id==id).first()
      if db_product:
@@ -82,7 +84,7 @@ def update_product(id:int, product:product, db : Session=Depends(get_db)):
         return "Not Found."
 
 #del
-@app.delete("/product")
+@app.delete("/product/{id}")
 def del_product(id:int, db : Session=Depends(get_db)):
     db_product=db.query(database_models.product).filter(database_models.product.id==id).first()
     if db_product:
